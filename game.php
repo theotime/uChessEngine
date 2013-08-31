@@ -80,9 +80,15 @@ class ChessEngine {
     public function main() {
         $token = $this->utils->get('token');
         $move = $this->utils->get('move');
+        $action = $this->utils->get('action');
 
         if ($token === false AND $move === false) {
             $this->newgame();
+            return;
+        }
+        
+        if ($token !== false AND $action === 'close') {
+            $this->closegame($token);
             return;
         }
 
@@ -102,7 +108,7 @@ class ChessEngine {
     /////////////////
     
     /**
-     * POST game.php
+     * GET game.php
      * 
      */
     private function newgame() {
@@ -116,15 +122,25 @@ class ChessEngine {
         $this->utils->session($token, 'W');
         echo json_encode(array('return' => 'success', 'token' => $token));
     }
+    
+    private function closegame($token) {
+        if (!$this->isTokenExist($token)) {
+            echo json_encode(array('return' => 'fail', 'message' => 'Invalid token.'));
+            return;
+        }
+        $this->utils->session($token, false);
+        $this->removeGame($token);
+        echo json_encode(array('return' => 'success'));
+    }
 
     /**
-     * POST game.php
+     * GET game.php
      * @param type $token
      * @return type
      */
     private function getlastupdate($token) {
         if (!$this->isTokenExist($token)) {
-            echo json_encode(array('return' => 'fail', 'message' => 'Invalid token.'));
+            echo json_encode(array('return' => 'fail', 'message' => 'The game has closed.'));
             return;
         }
         $fen = $this->getFEN($token);
@@ -153,7 +169,7 @@ class ChessEngine {
     }
 
     /**
-     * POST game.php
+     * GET game.php
      * @param type $token
      * @param type $move
      * @return type

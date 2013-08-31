@@ -22,6 +22,14 @@
                 display: none;
                 margin: 10px;
             }
+            
+            .btn-control {
+                text-align: center;
+            }
+            
+            .chess-screen {
+                width: 400px;
+            }
         </style>
     </head>
 
@@ -47,8 +55,15 @@
         <div id="chess-screen">
             <div class="row-fluid">
                 <div class="span4">
-                    <div id="board" style="width: 400px"></div>
-                    <p id="turn"><strong>White</strong> turn.</p>
+                    <div class="chess-screen">
+                        <div id="board" style="width: 400px"></div>
+                        <p id="turn"><strong>White</strong> turn.</p>
+                            <div class="btn-control">
+                                <a rel="external" href="client.html" class="btn">New Game</a>
+                                <a  href="#" id="restartgame" class="btn">Restart Game</a>
+                                <a href="#" id="closegame" class="btn">Abandon</a>
+                            </div>
+                    </div>
                 </div>
 
                 <div class="span8">

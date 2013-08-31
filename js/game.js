@@ -6,32 +6,45 @@
  * depends : chess.js, chessboard.js, jquery.
  */
 
-var Game = function (divname) {
+var Game = function(divname) {
 
-    var url = window.location.href;
-    if (url.search('token') === -1 ) {
-        url += '?token=';
-    } else {
-        url = "you're black player, token is ";
-    }
-    
+    var _this = this;
     var frameRefresh = 4 * 1000;
-    var timer, token, color;
+    var timer, token, color, url;
     var game = new Chess();
 
-    var onDragStart = function (source, piece, position, orientation) {
-        if (color == 'w' && (game.in_checkmate() === true || game.in_draw() === true ||
+    /**
+     * Send GET request to the server
+     * @param {type} data
+     * @returns {@exp;JSON@call;parse}
+     */
+    function sendXHRrequest(data) {
+        if (data === undefined)
+            data = false;
+
+        var XHRret = $.ajax({
+            url: 'game.php',
+            type: 'GET',
+            data: data,
+            async: false
+        });
+
+        return JSON.parse(XHRret.responseText);
+    }
+
+    var onDragStart = function(source, piece, position, orientation) {
+        if (color === 'w' && (game.in_checkmate() === true || game.in_draw() === true ||
                 piece.search(/^b/) !== -1)) {
             return false;
         }
-        
-        if (color == 'b' && (game.in_checkmate() === true || game.in_draw() === true ||
+
+        if (color === 'b' && (game.in_checkmate() === true || game.in_draw() === true ||
                 piece.search(/^w/) !== -1)) {
             return false;
         }
     };
 
-    var onDrop = function (source, target) {
+    var onDrop = function(source, target) {
         // see if the move is legal
         var move = game.move({
             from: source,
@@ -44,42 +57,28 @@ var Game = function (divname) {
             return 'snapback';
         }
 
-        // ajax POST update
-        $.ajax({
-           url: 'game.php',
-           type: 'GET',
-           data: { 'token': token, 'move': move.san }
-        });
+        sendXHRrequest({token: token, move: move.san});
     };
 
     // update the board position after the piece snap
     // for castling, en passant, pawn promotion
-    var onSnapEnd = function () {
+    var onSnapEnd = function() {
         board.position(game.fen());
     };
 
     function getLastFENfromServer() {
-        var XHRret = $.ajax({
-           url: 'game.php',
-           type: 'GET',
-           data: { 'token': token },
-           async: false
-        });
-        
-        var ret = JSON.parse(XHRret.responseText);
-        if(ret.return === 'fail') {
+        var ret = sendXHRrequest({token: token});
+
+        if (ret.return === 'fail') {
             $('.message').text(ret.message);
             $('.message-box').fadeIn();
-            if (typeof board !== 'undefined') {
-                window.clearInterval(timer);
-                board.clear();
-            }
+            unsetGame();
             return null;
         }
-        if(ret.color !== color) {
+        if (ret.color !== color) {
             color = ret.color;
         }
-        
+
         var fen = ret.fen;
         game.load(fen);
         return game.fen();
@@ -100,16 +99,60 @@ var Game = function (divname) {
             window.clearInterval(timer);
         }
     };
-    
+
     function createNewGame() {
-        $.ajax({
-           url: 'game.php',
-           type: 'GET',
-           async: false
-        }).done(function ( data ) {
-            var ret = JSON.parse(data);
-            token = ret.token;
+        var ret = sendXHRrequest();
+        token = ret.token;
+    }
+
+    function unsetGame() {
+        if (typeof board !== 'undefined') {
+            window.clearInterval(timer);
+            board.clear();
+        }
+    }
+
+    function resetGame() {
+        unsetGame();
+        createNewGame();
+        var fen = getLastFENfromServer();
+        board.orientation((color === 'w') ? 'white' : 'black');
+        render(fen);
+        _this.run();
+
+    }
+
+    // jQuery handler
+    function setBtnControl() {
+
+        //external link : new window
+        $('a[rel="external"]').click(function() {
+            window.open($(this).attr('href'));
+            return false;
         });
+
+        $('#restartgame').click(function() {
+            sendXHRrequest({token: token, action: 'close'});
+            resetGame();
+            return false;
+        });
+
+        $('#closegame').click(function() {
+            sendXHRrequest({token: token, action: 'close'});
+            unsetGame();
+            return false;
+        });
+    }
+    
+    function getCurrentUrl() {
+        var url = window.location.href;
+        if (url.search('token') === -1) {
+            url += '?token=';
+        } else {
+            var l = url.length;
+            url = url.slice(0, l - 7);
+        }
+        return url;
     }
     
     this.run = function () {
@@ -117,16 +160,21 @@ var Game = function (divname) {
         $('input.show-share-token').val(url + token);
         $('span.show-share-token').text(url + token);
     };
-    
+
+    //init
+    setBtnControl();
+
+    url = getCurrentUrl();
+
     token = getQuerystring('token', false);
     if (token === false) {
         createNewGame();
     }
     var fen = getLastFENfromServer();
     if (fen === null) {
-        this.run = function () {};
+        this.run = function() {};
     }
-    
+
     var board = new ChessBoard(divname, {
         draggable: true,
         position: fen,
