@@ -184,7 +184,7 @@ class ChessEngine {
             echo json_encode(array('return' => 'fail', 'message' => 'Not your turn.'));
             return;
         }
-        $move = str_replace(array('+'), '', $move);
+        $move = str_replace(array('+', '#'), '', $move);
         $err = $this->chess->moveSAN($move);
         if ($this->chess->isError($err)) {
             echo json_encode(array('return' => 'fail', 'message' => $err->getMessage()));

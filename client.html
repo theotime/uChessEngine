@@ -44,14 +44,6 @@
             </div>
         </div>
 
-
-        <div class="row-fluid">
-            <div class="alert message-box">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
-                <strong>Warning!</strong> <span class="message"></span>
-            </div>
-        </div>
-
         <div id="chess-screen">
             <div class="row-fluid">
                 <div class="span4">
@@ -60,8 +52,8 @@
                         <p id="turn"><strong>White</strong> turn.</p>
                             <div class="btn-control">
                                 <a rel="external" href="client.html" class="btn">New Game</a>
-                                <a  href="#" id="restartgame" class="btn">Restart Game</a>
-                                <a href="#" id="closegame" class="btn">Abandon</a>
+                                <a  href="#" class="btn restartgame">Restart Game</a>
+                                <a href="#" class="btn closegame">Abandon</a>
                             </div>
                     </div>
                 </div>
@@ -71,7 +63,7 @@
             </div>
         </div>
 
-        <div id="share-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div id="share-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="shareModal" aria-hidden="true">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h3>Share this link with your friend</h3>
@@ -81,6 +73,50 @@
             </div>
             <div class="modal-footer">
                 <a data-dismiss="modal" href="#" class="btn btn-primary">Ok</a>
+            </div>
+        </div>
+        
+        <div id="restart-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="restartModal" aria-hidden="true">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h3>Game End</h3>
+            </div>
+            <div class="modal-body">
+                <p><span class="message"></span> Do you want to restart the game ?</p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn btn-primary restartgame-modal-btn">Restart a new game</a>
+            </div>
+        </div>
+        
+        
+        <div id="promotion-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="promotionModal" aria-hidden="true">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h3>Choose the piece for your promotion</h3>
+            </div>
+            <div class="modal-body">
+                <form id="promotion-form">
+                    <label class="radio inline">
+                        <input type="radio" name="promotion" id="promotion-queen" value="q" checked />
+                        <img src="/img/chesspieces/wikipedia/wQ.png" />
+                    </label>
+                    <label class="radio inline">
+                        <input type="radio" name="promotion" id="promotion-rook" value="r" />
+                        <img src="/img/chesspieces/wikipedia/wR.png" />
+                    </label>
+                    <label class="radio inline">
+                        <input type="radio" name="promotion" id="promotion-bishop" value="b" />
+                        <img src="/img/chesspieces/wikipedia/wB.png" />
+                    </label>
+                    <label class="radio inline">
+                        <input type="radio" name="promotion" id="promotion-knight" value="n" />
+                        <img src="/img/chesspieces/wikipedia/wN.png" />
+                    </label>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn btn-primary promote">Choose</a>
             </div>
         </div>
 

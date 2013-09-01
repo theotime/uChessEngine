@@ -11,6 +11,7 @@ var Game = function(divname) {
     var _this = this;
     var frameRefresh = 4 * 1000;
     var timer, token, color, url;
+    var bufferMove = {source: "", target: ""};
     var game = new Chess();
 
     /**
@@ -45,19 +46,39 @@ var Game = function(divname) {
     };
 
     var onDrop = function(source, target) {
-        // see if the move is legal
+        if (isPromotionSquare(source, target)) {
+            if(isValidSquare(target, game.moves({square: source, verbose:true}))) {
+                if (color === 'b' ) {
+                    $('#promotion-queen+img').attr('src', '/img/chesspieces/wikipedia/bQ.png');
+                    $('#promotion-rook+img').attr('src', '/img/chesspieces/wikipedia/bR.png');
+                    $('#promotion-bishop+img').attr('src', '/img/chesspieces/wikipedia/bB.png');
+                    $('#promotion-knight+img').attr('src', '/img/chesspieces/wikipedia/bN.png');
+                }
+                bufferMove.source = source;
+                bufferMove.target = target;
+                $('#promotion-modal').modal('show');
+                return false;
+            } else {
+                return 'snapback';
+            }
+            
+        }
+
         var move = game.move({
             from: source,
             to: target,
-            promotion: 'q' // NOTE: always promote to Queen for example simplicity
         });
 
         // illegal move
         if (move === null) {
             return 'snapback';
         }
-
+        
         sendXHRrequest({token: token, move: move.san});
+        
+        if (game.game_over()) {
+            unsetGame((game.turn() === 'b') ? "White wins." : "Black wins.");
+        }
     };
 
     // update the board position after the piece snap
@@ -65,14 +86,35 @@ var Game = function(divname) {
     var onSnapEnd = function() {
         board.position(game.fen());
     };
+    
+    function isValidSquare(target, vGameMoves) {
+        for(var i=0;i<vGameMoves.length;i++ ) {
+            if(vGameMoves[i].to === target) {
+                return true;
+            }
+        }
+    }
+    
+    function isPromotionSquare(source, target) {
+        var piece = game.get(source);
+        
+        var promotionLine = false;
+        if((target.search('1') !== -1)  || (target.search('8') !== -1)) {
+            promotionLine = true;
+        }
+        
+        if ((piece.type === 'p') && (promotionLine === true) ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     function getLastFENfromServer() {
         var ret = sendXHRrequest({token: token});
 
         if (ret.return === 'fail') {
-            $('.message').text(ret.message);
-            $('.message-box').fadeIn();
-            unsetGame();
+            unsetGame(ret.message);
             return null;
         }
         if (ret.color !== color) {
@@ -96,7 +138,7 @@ var Game = function(divname) {
             var fen = getLastFENfromServer();
             render(fen);
         } else {
-            window.clearInterval(timer);
+            unsetGame((game.turn() === 'b') ? "White wins." : "Black wins.");
         }
     };
 
@@ -105,15 +147,17 @@ var Game = function(divname) {
         token = ret.token;
     }
 
-    function unsetGame() {
+    function unsetGame(message) {
         if (typeof board !== 'undefined') {
             window.clearInterval(timer);
-            board.clear();
+            $('.message').text(message);
+            $('#restart-modal').modal('show');
         }
+        
     }
 
     function resetGame() {
-        unsetGame();
+        window.clearInterval(timer);
         createNewGame();
         var fen = getLastFENfromServer();
         board.orientation((color === 'w') ? 'white' : 'black');
@@ -131,15 +175,39 @@ var Game = function(divname) {
             return false;
         });
 
-        $('#restartgame').click(function() {
+        $('.restartgame').click(function() {
             sendXHRrequest({token: token, action: 'close'});
             resetGame();
             return false;
         });
+        
+        $('.restartgame-modal-btn').click(function() {
+            $('#restart-modal').modal('hide');
+            resetGame();
+            return false;
+        });
 
-        $('#closegame').click(function() {
+        $('.closegame').click(function() {
             sendXHRrequest({token: token, action: 'close'});
-            unsetGame();
+            unsetGame('You close the game.');
+            return false;
+        });
+        
+        $('.promote').click(function() {
+            var promotion = $('#promotion-form input:checked').val();
+            $('#promotion-modal').modal('hide');
+            var move = game.move({
+                from: bufferMove.source,
+                to: bufferMove.target,
+                promotion: promotion
+            });
+
+            sendXHRrequest({token: token, move: move.san});
+
+            if (game.game_over()) {
+                var player = getCurrentTurn();
+                unsetGame((player === 'b') ? "White wins." : "Black wins.");
+            }
             return false;
         });
     }
