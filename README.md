@@ -10,6 +10,7 @@ Javascript dependencies :
 - Jquery - http://jquery.com/
 - chess.js - https://github.com/jhlywa/chess.js
 - ChessBoard.js - http://chessboardjs.com/
+- ZeroClipboard - https://github.com/zeroclipboard/ZeroClipboard
 
 CSS dependencies :
 - Boostrap 2.3.2 - http://getbootstrap.com/2.3.2/

@@ -123,6 +123,11 @@ class ChessEngine {
         echo json_encode(array('return' => 'success', 'token' => $token));
     }
     
+    /**
+     * GET game.php?action=close
+     * @param type $token
+     * @return type
+     */
     private function closegame($token) {
         if (!$this->isTokenExist($token)) {
             echo json_encode(array('return' => 'fail', 'message' => 'Invalid token.'));

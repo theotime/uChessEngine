@@ -226,7 +226,7 @@ var Game = function(divname) {
     this.run = function () {
         timer = window.setInterval(gameLoop, frameRefresh);
         $('input.show-share-token').val(url + token);
-        $('span.show-share-token').text(url + token);
+        $('#copy-button').text('Share this game');
     };
 
     //init
