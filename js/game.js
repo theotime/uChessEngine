@@ -144,25 +144,37 @@ var Game = function(divname) {
 
     function createNewGame() {
         var ret = sendXHRrequest();
-        token = ret.token;
+        if(ret.return === 'fail') {
+            unsetGame(ret.message, 'override');
+            return false;
+        } else {
+            token = ret.token;
+            return true;
+        }
     }
 
-    function unsetGame(message) {
+    function unsetGame(message, type) {
+        if (type === undefined)
+            type = 'restart';
+        
+        var tm = '#' + type + '-modal';
+        
         if (typeof board !== 'undefined') {
             window.clearInterval(timer);
-            $('.message').text(message);
-            $('#restart-modal').modal('show');
         }
+        $('.message').text(message);
+        $(tm).modal('show');
         
     }
 
     function resetGame() {
         window.clearInterval(timer);
-        createNewGame();
-        var fen = getLastFENfromServer();
-        board.orientation((color === 'w') ? 'white' : 'black');
-        render(fen);
-        _this.run();
+        if (createNewGame()) {
+            var fen = getLastFENfromServer();
+            board.orientation((color === 'w') ? 'white' : 'black');
+            render(fen);
+            _this.run();
+        }
 
     }
 
@@ -236,9 +248,13 @@ var Game = function(divname) {
 
     token = getQuerystring('token', false);
     if (token === false) {
-        createNewGame();
+        var created = createNewGame();
     }
-    var fen = getLastFENfromServer();
+    var fen = null;
+    if (created) {
+        fen = getLastFENfromServer();
+    }
+    
     if (fen === null) {
         this.run = function() {};
     }

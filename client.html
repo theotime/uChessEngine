@@ -41,11 +41,13 @@
                     <div class="chess-screen">
                         <div id="board" style="width: 400px"></div>
                         <p id="turn"><strong>White</strong> turn.</p>
-                            <div class="btn-control">
+                        <div class="btn-control">
+                            <div class="btn-group">
                                 <a rel="external" href="client.html" class="btn">New Game</a>
                                 <a  href="#" class="btn restartgame">Restart Game</a>
                                 <a href="#" class="btn closegame">Abandon</a>
                             </div>
+                        </div>
                     </div>
                 </div>
 
@@ -64,6 +66,19 @@
             </div>
             <div class="modal-footer">
                 <a href="#" class="btn btn-primary restartgame-modal-btn">Restart a new game</a>
+            </div>
+        </div>
+        
+        <div id="override-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="overrideModal" aria-hidden="true">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h3>Cannot create the game</h3>
+            </div>
+            <div class="modal-body">
+                <p><span class="message"></span></p>
+            </div>
+            <div class="modal-footer">
+                <a data-dismiss="modal" href="#" class="btn btn-primary">Retry later</a>
             </div>
         </div>
         

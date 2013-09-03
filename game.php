@@ -6,11 +6,14 @@
  *
  *
  */
-
-
 ///// CONSTANTS /////
 define('SAVEDIR', '/home/theo/uChessEngine/saves/');
-define('TIMEOUT', 900);//in seconds = 15 minutes
+define('TIMEOUT', 900); //in seconds = 15 minutes
+define('MAXFILES', 7); 
+
+//Filename
+define('COUNTNAME', 'count');
+define('TSNAME', 'timestamp');
 
 class Utils {
 
@@ -62,11 +65,70 @@ class Utils {
 
 }
 
+class GarbageCollector {
+
+    private $ts;
+
+    function __construct() {
+        $now = time();
+        $filename = SAVEDIR . TSNAME;
+        if (!file_exists($filename)) {
+            file_put_contents($filename, $now);
+            $this->ts = 0;
+        } else {
+            $last = file_get_contents($filename);
+            $this->ts = $now - $last;
+        }
+    }
+
+    public function clean() {
+        if ($this->ts > (4 * TIMEOUT)) {
+            register_shutdown_function(array(&$this, 'cleanSaveDirectory'));
+            $now = time();
+            $filename = SAVEDIR . TSNAME;
+            file_put_contents($filename, $now);
+        }
+    }
+
+    public function cleanSaveDirectory() {
+        $dh = opendir(SAVEDIR);
+        while (false !== ($filename = readdir($dh))) {
+            $save = json_decode(file_get_contents(SAVEDIR . $filename));
+
+            $now = time();
+            if (is_object($save) AND (($now - $save->lastupdate) > TIMEOUT)) {
+                unlink(SAVEDIR . $filename);
+            }
+        }
+        closedir($dh);
+    }
+
+    public function isOverride() {
+        $filename = SAVEDIR . COUNTNAME;
+        if (!file_exists($filename)) {
+            file_put_contents($filename, 0);
+            $count = 0;
+            return false;
+        } else {
+            $count = file_get_contents($filename);
+        }
+        return ($count > MAXFILES) ? true : false;
+    }
+
+    public function autoIncrement() {
+        $filename = SAVEDIR . COUNTNAME;
+        $count = file_get_contents($filename);
+        $count++;
+        file_put_contents($filename, $count);
+    }
+
+}
+
 class ChessEngine {
 
     private $utils = null;
     private $chess = null;
-    
+    private $gc = null;
     //json representation of the game.
     private $save = null;
 
@@ -74,6 +136,8 @@ class ChessEngine {
         require_once 'Games/Chess/Standard.php';
         $this->chess = new Games_Chess_Standard;
         $this->utils = new Utils();
+        $this->gc = new GarbageCollector();
+        $this->gc->clean();
         session_start();
     }
 
@@ -86,7 +150,7 @@ class ChessEngine {
             $this->newgame();
             return;
         }
-        
+
         if ($token !== false AND $action === 'close') {
             $this->closegame($token);
             return;
@@ -106,23 +170,29 @@ class ChessEngine {
     /////////////////
     /// Controllers
     /////////////////
-    
+
     /**
      * GET game.php
      * 
      */
     private function newgame() {
-        $token = 'zero';
+        if ($this->gc->isOverride()) {
+            echo json_encode(array('return' => 'fail', 'message' => 'The server cannot create the party, re-try in ' . round((4 * TIMEOUT) / 60 / 60) . 'h.'));
+            return false;
+        }
+
+        $token = COUNTNAME;
         while ($this->isTokenExist($token)) {
             $token = $this->utils->generateToken();
         }
-        
+
         $this->createNewGame();
+        $this->gc->autoIncrement();
         $this->saveFEN($token);
         $this->utils->session($token, 'W');
         echo json_encode(array('return' => 'success', 'token' => $token));
     }
-    
+
     /**
      * GET game.php?action=close
      * @param type $token
@@ -149,21 +219,21 @@ class ChessEngine {
             return;
         }
         $fen = $this->getFEN($token);
-        
+
         $now = time();
-        if( (($now - $this->getLastTime($token)) > TIMEOUT) AND ($this->chess->toMove() !== $this->utils->session($token))) {
+        if ((($now - $this->getLastTime($token)) > TIMEOUT) AND ($this->chess->toMove() !== $this->utils->session($token))) {
             $this->removeGame($token);
             echo json_encode(array('return' => 'fail', 'message' => 'Timeout : your opponent is probably gone!'));
             return;
         }
-        
+
         //The player has disconnected and try to reconnect?
         if ($this->utils->session($token) === false && $this->getPlayersInGame($token) == 'wb') {
             $this->removeGame($token);
             echo json_encode(array('return' => 'fail', 'message' => 'Timeout : you cannot rejoin the game after leaving.'));
             return;
         }
-        
+
         // first connection for black player?
         if ($this->utils->session($token) === false && $this->getPlayersInGame($token) == 'w') {
             $this->utils->session($token, 'B');
@@ -206,20 +276,20 @@ class ChessEngine {
     private function isTokenExist($token) {
         return file_exists(SAVEDIR . $token);
     }
-    
+
     private function removeGame($token) {
         unlink(SAVEDIR . $token);
     }
-    
+
     private function createNewGame() {
         $this->chess->resetGame();
         $this->save = new StdClass();
         $this->save->FEN = "";
-        $this->save->ig_players = "w";//Default
+        $this->save->ig_players = "w"; //Default
         $this->save->lastupdate = time();
     }
-    
-    private function writeSave($token){
+
+    private function writeSave($token) {
         $this->save->lastupdate = time();
         return file_put_contents(SAVEDIR . $token, json_encode($this->save));
     }
@@ -245,7 +315,7 @@ class ChessEngine {
         }
         return $this->save->ig_players;
     }
-    
+
     private function setPlayersInGame($token, $player) {
         if ($this->save === null) {
             $this->save = json_decode(file_get_contents(SAVEDIR . $token));
@@ -253,13 +323,14 @@ class ChessEngine {
         $this->save->ig_players .= $player;
         return $this->writeSave($token);
     }
-    
+
     private function getLastTime($token) {
         if ($this->save === null) {
             $this->save = json_decode(file_get_contents(SAVEDIR . $token));
         }
         return $this->save->lastupdate;
     }
+
 }
 
 $engine = new ChessEngine();
