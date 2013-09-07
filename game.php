@@ -199,7 +199,7 @@ class ChessEngine {
      * @return type
      */
     private function closegame($token) {
-        if (!$this->isTokenExist($token)) {
+        if (!$this->isTokenExist($token) AND ($this->utils->session($token) !== 'W') AND ($this->utils->session($token) !== 'B')) {
             echo json_encode(array('return' => 'fail', 'message' => 'Invalid token.'));
             return;
         }
@@ -227,10 +227,9 @@ class ChessEngine {
             return;
         }
 
-        //The player has disconnected and try to reconnect?
+        //The next players connecting to the game are spectators
         if ($this->utils->session($token) === false && $this->getPlayersInGame($token) == 'wb') {
-            $this->removeGame($token);
-            echo json_encode(array('return' => 'fail', 'message' => 'Timeout : you cannot rejoin the game after leaving.'));
+            echo json_encode(array('return' => 'success', 'fen' => $fen, 'color' => 's'));
             return;
         }
 

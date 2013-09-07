@@ -10,7 +10,7 @@ var Game = function(divname) {
 
     var _this = this;
     var frameRefresh = 4 * 1000;
-    var timer, token, color, url;
+    var timer, token, color, url, board;
     var bufferMove = {source: "", target: ""};
     var game = new Chess();
 
@@ -263,13 +263,23 @@ var Game = function(divname) {
     if (fen === null) {
         this.run = function() {};
     }
-
-    var board = new ChessBoard(divname, {
-        draggable: true,
-        position: fen,
-        orientation: (color === 'w') ? 'white' : 'black',
-        onDragStart: onDragStart,
-        onDrop: onDrop,
-        onSnapEnd: onSnapEnd
-    });
+    
+    if (color === 's') {
+        board = new ChessBoard('board', fen);
+        $('#spectactor').show();
+        $('.btn-control').hide();
+        $('.restartgame-modal-btn').text('Ok');
+        $('.restartgame-modal-btn').attr('data-dismiss', 'modal');
+        $('.restartgame-modal-btn').removeClass('restartgame-modal-btn');
+        $('.message').parent('p').html('<span class="message"></span>');
+    } else {
+        board = new ChessBoard(divname, {
+            draggable: true,
+            position: fen,
+            orientation: (color === 'w') ? 'white' : 'black',
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd
+        });
+    }
 }; 
