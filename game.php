@@ -199,8 +199,12 @@ class ChessEngine {
      * @return type
      */
     private function closegame($token) {
-        if (!$this->isTokenExist($token) AND ($this->utils->session($token) !== 'W') AND ($this->utils->session($token) !== 'B')) {
+        if (!$this->isTokenExist($token)) {
             echo json_encode(array('return' => 'fail', 'message' => 'Invalid token.'));
+            return;
+        }
+        if (!$this->utils->session($token)) {
+            echo json_encode(array('return' => 'fail', 'message' => 'You are spectator.'));
             return;
         }
         $this->utils->session($token, false);

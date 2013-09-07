@@ -133,11 +133,10 @@ var Game = function(divname) {
         $('#turn > strong').text(color);
     }
 
-    var gameLoop = function() {
-        if (!game.game_over()) {
-            var fen = getLastFENfromServer();
-            render(fen);
-        } else {
+    var gameLoop = function() {  
+        var fen = getLastFENfromServer();
+        render(fen);
+        if (game.game_over()) {
             unsetGame((game.turn() === 'b') ? "White wins." : "Black wins.");
         }
     };
