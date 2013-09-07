@@ -186,6 +186,10 @@ var Game = function(divname) {
             window.open($(this).attr('href'));
             return false;
         });
+        
+        $(window).unload(function () {
+            sendXHRrequest({token: token, action: 'close'});
+        });
 
         $('.restartgame').click(function() {
             sendXHRrequest({token: token, action: 'close'});
@@ -247,8 +251,9 @@ var Game = function(divname) {
     url = getCurrentUrl();
 
     token = getQuerystring('token', false);
+    var created = true;
     if (token === false) {
-        var created = createNewGame();
+        created = createNewGame();
     }
     var fen = null;
     if (created) {

@@ -9,7 +9,7 @@
 ///// CONSTANTS /////
 define('SAVEDIR', '/home/theo/uChessEngine/saves/');
 define('TIMEOUT', 900); //in seconds = 15 minutes
-define('MAXFILES', 7); 
+define('MAXFILES', 10000); 
 
 //Filename
 define('COUNTNAME', 'count');
